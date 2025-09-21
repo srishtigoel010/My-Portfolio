@@ -1,19 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { portfolioData } from '../data/mock';
+import { projectsAPI } from '../services/api';
 import { ExternalLink, Folder, Filter } from 'lucide-react';
+import LoadingSpinner from './LoadingSpinner';
 
 const Projects = () => {
-  const { projects } = portfolioData;
+  const [projectsData, setProjectsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  const categories = ['All', ...new Set(projects.map(project => project.category))];
+  useEffect(() => {
+    const fetchProjectsData = async () => {
+      try {
+        setLoading(true);
+        const result = await projectsAPI.getProjects();
+        
+        if (result.success) {
+          setProjectsData(result.data);
+        } else {
+          setError(result.error);
+        }
+      } catch (err) {
+        setError('Failed to load projects data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjectsData();
+  }, []);
+
+  if (loading) {
+    return (
+      <section id="projects" className="py-20 bg-gray-50">
+        <div className="container mx-auto px-6">
+          <LoadingSpinner size="large" message="Loading projects..." />
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section id="projects" className="py-20 bg-gray-50">
+        <div className="container mx-auto px-6">
+          <div className="text-center">
+            <div className="text-red-500 mb-4">Error loading projects data</div>
+            <p className="text-warm-gray">{error}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!projectsData || projectsData.length === 0) {
+    return (
+      <section id="projects" className="py-20 bg-gray-50">
+        <div className="container mx-auto px-6">
+          <div className="text-center text-warm-gray">
+            No projects information available
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const categories = ['All', ...new Set(projectsData.map(project => project.category))];
   
   const filteredProjects = selectedCategory === 'All' 
-    ? projects 
-    : projects.filter(project => project.category === selectedCategory);
+    ? projectsData 
+    : projectsData.filter(project => project.category === selectedCategory);
 
   return (
     <section id="projects" className="py-20 bg-gray-50">
@@ -31,28 +90,30 @@ const Projects = () => {
           </div>
 
           {/* Category Filter */}
-          <div className="flex flex-wrap justify-center gap-3 mb-12">
-            <Filter size={20} className="text-sage mt-2" />
-            {categories.map((category) => (
-              <Button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-6 py-2 rounded-full transition-all duration-300 ${
-                  selectedCategory === category
-                    ? 'bg-sage text-white shadow-lg'
-                    : 'bg-white text-charcoal hover:bg-sage/10 border border-sage/20'
-                }`}
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
+          {categories.length > 1 && (
+            <div className="flex flex-wrap justify-center gap-3 mb-12">
+              <Filter size={20} className="text-sage mt-2" />
+              {categories.map((category) => (
+                <Button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-6 py-2 rounded-full transition-all duration-300 ${
+                    selectedCategory === category
+                      ? 'bg-sage text-white shadow-lg'
+                      : 'bg-white text-charcoal hover:bg-sage/10 border border-sage/20'
+                  }`}
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+          )}
 
           {/* Projects Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {filteredProjects.map((project, index) => (
               <Card 
-                key={project.id}
+                key={project.id || index}
                 className="group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 bg-white border-0 overflow-hidden"
               >
                 {/* Project Image */}
@@ -61,6 +122,9 @@ const Projects = () => {
                     src={project.image}
                     alt={project.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    onError={(e) => {
+                      e.target.src = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
+                    }}
                   />
                   <div className="absolute inset-0 bg-sage/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div className="absolute top-4 right-4">
@@ -90,16 +154,18 @@ const Projects = () => {
                   </p>
 
                   {/* Technologies */}
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {project.technologies.map((tech, techIndex) => (
-                      <Badge 
-                        key={techIndex}
-                        className="bg-sage/10 text-sage border-sage/20 text-xs px-3 py-1"
-                      >
-                        {tech}
-                      </Badge>
-                    ))}
-                  </div>
+                  {project.technologies && project.technologies.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {project.technologies.map((tech, techIndex) => (
+                        <Badge 
+                          key={techIndex}
+                          className="bg-sage/10 text-sage border-sage/20 text-xs px-3 py-1"
+                        >
+                          {tech}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Project Actions */}
                   <div className="flex gap-3">

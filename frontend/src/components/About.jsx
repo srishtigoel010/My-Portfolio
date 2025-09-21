@@ -1,8 +1,69 @@
-import React from 'react';
-import { portfolioData } from '../data/mock';
+import React, { useState, useEffect } from 'react';
+import { portfolioAPI } from '../services/api';
+import LoadingSpinner from './LoadingSpinner';
 
 const About = () => {
-  const { about, education, certifications } = portfolioData;
+  const [portfolioData, setPortfolioData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchPortfolioData = async () => {
+      try {
+        setLoading(true);
+        const result = await portfolioAPI.getPortfolio();
+        
+        if (result.success) {
+          setPortfolioData(result.data);
+        } else {
+          setError(result.error);
+        }
+      } catch (err) {
+        setError('Failed to load portfolio data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPortfolioData();
+  }, []);
+
+  if (loading) {
+    return (
+      <section id="about" className="py-20 bg-white">
+        <div className="container mx-auto px-6">
+          <LoadingSpinner size="large" message="Loading about information..." />
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section id="about" className="py-20 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center">
+            <div className="text-red-500 mb-4">Error loading about data</div>
+            <p className="text-warm-gray">{error}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const { about, education, certifications } = portfolioData || {};
+
+  if (!about) {
+    return (
+      <section id="about" className="py-20 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center text-warm-gray">
+            About information not available
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="about" className="py-20 bg-white">
@@ -39,32 +100,36 @@ const About = () => {
               </div>
 
               {/* Education */}
-              <div>
-                <h3 className="text-2xl font-semibold text-charcoal mb-4">Education</h3>
-                <div className="space-y-3">
-                  {education.map((edu, index) => (
-                    <div key={index} className="border-l-4 border-sage pl-6">
-                      <h4 className="font-semibold text-charcoal">{edu.degree}</h4>
-                      <p className="text-warm-gray">{edu.institution}</p>
-                      <p className="text-sm text-warm-gray">{edu.period} {edu.score && `| Score: ${edu.score}`}</p>
-                    </div>
-                  ))}
+              {education && education.length > 0 && (
+                <div>
+                  <h3 className="text-2xl font-semibold text-charcoal mb-4">Education</h3>
+                  <div className="space-y-3">
+                    {education.map((edu, index) => (
+                      <div key={index} className="border-l-4 border-sage pl-6">
+                        <h4 className="font-semibold text-charcoal">{edu.degree}</h4>
+                        <p className="text-warm-gray">{edu.institution}</p>
+                        <p className="text-sm text-warm-gray">{edu.period} {edu.score && `| Score: ${edu.score}`}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Certifications */}
-              <div>
-                <h3 className="text-2xl font-semibold text-charcoal mb-4">Certifications</h3>
-                <div className="space-y-3">
-                  {certifications.map((cert, index) => (
-                    <div key={index} className="border-l-4 border-muted-brown pl-6">
-                      <h4 className="font-semibold text-charcoal">{cert.name}</h4>
-                      <p className="text-warm-gray">{cert.issuer}</p>
-                      <p className="text-sm text-warm-gray">{cert.period}</p>
-                    </div>
-                  ))}
+              {certifications && certifications.length > 0 && (
+                <div>
+                  <h3 className="text-2xl font-semibold text-charcoal mb-4">Certifications</h3>
+                  <div className="space-y-3">
+                    {certifications.map((cert, index) => (
+                      <div key={index} className="border-l-4 border-muted-brown pl-6">
+                        <h4 className="font-semibold text-charcoal">{cert.name}</h4>
+                        <p className="text-warm-gray">{cert.issuer}</p>
+                        <p className="text-sm text-warm-gray">{cert.period}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

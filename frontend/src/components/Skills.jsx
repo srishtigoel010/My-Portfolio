@@ -1,22 +1,81 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Badge } from './ui/badge';
-import { portfolioData } from '../data/mock';
+import { skillsAPI } from '../services/api';
 import { Code, Users, Lightbulb, TrendingUp } from 'lucide-react';
+import LoadingSpinner from './LoadingSpinner';
 
 const Skills = () => {
-  const { skills } = portfolioData;
+  const [skillsData, setSkillsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchSkillsData = async () => {
+      try {
+        setLoading(true);
+        const result = await skillsAPI.getSkills();
+        
+        if (result.success) {
+          setSkillsData(result.data);
+        } else {
+          setError(result.error);
+        }
+      } catch (err) {
+        setError('Failed to load skills data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSkillsData();
+  }, []);
+
+  if (loading) {
+    return (
+      <section id="skills" className="py-20 bg-gray-50">
+        <div className="container mx-auto px-6">
+          <LoadingSpinner size="large" message="Loading skills..." />
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section id="skills" className="py-20 bg-gray-50">
+        <div className="container mx-auto px-6">
+          <div className="text-center">
+            <div className="text-red-500 mb-4">Error loading skills data</div>
+            <p className="text-warm-gray">{error}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!skillsData) {
+    return (
+      <section id="skills" className="py-20 bg-gray-50">
+        <div className="container mx-auto px-6">
+          <div className="text-center text-warm-gray">
+            Skills information not available
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   const skillCategories = [
     {
       title: "Technical Skills",
       icon: <Code className="w-8 h-8" />,
-      skills: skills.technical,
+      skills: skillsData.technical || [],
       color: "bg-sage/10 text-sage border-sage/20"
     },
     {
       title: "Transferable Skills", 
       icon: <Users className="w-8 h-8" />,
-      skills: skills.transferable,
+      skills: skillsData.transferable || [],
       color: "bg-muted-brown/10 text-muted-brown border-muted-brown/20"
     }
   ];

@@ -1,11 +1,70 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
-import { portfolioData } from '../data/mock';
+import { experienceAPI } from '../services/api';
 import { Calendar, MapPin, ChevronRight } from 'lucide-react';
+import LoadingSpinner from './LoadingSpinner';
 
 const Experience = () => {
-  const { experience } = portfolioData;
+  const [experienceData, setExperienceData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchExperienceData = async () => {
+      try {
+        setLoading(true);
+        const result = await experienceAPI.getExperience();
+        
+        if (result.success) {
+          setExperienceData(result.data);
+        } else {
+          setError(result.error);
+        }
+      } catch (err) {
+        setError('Failed to load experience data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExperienceData();
+  }, []);
+
+  if (loading) {
+    return (
+      <section id="experience" className="py-20 bg-white">
+        <div className="container mx-auto px-6">
+          <LoadingSpinner size="large" message="Loading experience..." />
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section id="experience" className="py-20 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center">
+            <div className="text-red-500 mb-4">Error loading experience data</div>
+            <p className="text-warm-gray">{error}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!experienceData || experienceData.length === 0) {
+    return (
+      <section id="experience" className="py-20 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center text-warm-gray">
+            No experience information available
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="experience" className="py-20 bg-white">
@@ -28,8 +87,8 @@ const Experience = () => {
             <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-sage/30 hidden md:block"></div>
 
             <div className="space-y-8">
-              {experience.map((job, index) => (
-                <div key={job.id} className="relative">
+              {experienceData.map((job, index) => (
+                <div key={job.id || index} className="relative">
                   {/* Timeline Dot */}
                   <div className="absolute left-6 w-4 h-4 bg-sage rounded-full border-4 border-white shadow-lg hidden md:block"></div>
                   
@@ -60,20 +119,22 @@ const Experience = () => {
                         </div>
 
                         {/* Responsibilities */}
-                        <div>
-                          <h4 className="text-lg font-semibold text-charcoal mb-4">Key Achievements</h4>
-                          <ul className="space-y-3">
-                            {job.responsibilities.map((responsibility, respIndex) => (
-                              <li 
-                                key={respIndex}
-                                className="flex items-start gap-3 text-warm-gray leading-relaxed"
-                              >
-                                <ChevronRight size={16} className="text-sage mt-1 flex-shrink-0" />
-                                <span>{responsibility}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                        {job.responsibilities && job.responsibilities.length > 0 && (
+                          <div>
+                            <h4 className="text-lg font-semibold text-charcoal mb-4">Key Achievements</h4>
+                            <ul className="space-y-3">
+                              {job.responsibilities.map((responsibility, respIndex) => (
+                                <li 
+                                  key={respIndex}
+                                  className="flex items-start gap-3 text-warm-gray leading-relaxed"
+                                >
+                                  <ChevronRight size={16} className="text-sage mt-1 flex-shrink-0" />
+                                  <span>{responsibility}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </div>
@@ -96,7 +157,7 @@ const Experience = () => {
                 <div className="text-sm text-warm-gray">Through strategic content planning</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-sage mb-2">4+</div>
+                <div className="text-3xl font-bold text-sage mb-2">{experienceData.length}+</div>
                 <div className="text-charcoal font-medium">Companies Impacted</div>
                 <div className="text-sm text-warm-gray">Across different industries</div>
               </div>
