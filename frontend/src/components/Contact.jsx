@@ -1,19 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
-import { portfolioData } from '../data/mock';
-import { Mail, Phone, MapPin, Send, Linkedin, ExternalLink } from 'lucide-react';
+import { portfolioAPI, contactAPI } from '../services/api';
+import { Mail, Phone, MapPin, Send, Linkedin, ExternalLink, CheckCircle, AlertCircle } from 'lucide-react';
+import LoadingSpinner from './LoadingSpinner';
 
 const Contact = () => {
-  const { personal } = portfolioData;
+  const [portfolioData, setPortfolioData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', or null
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     subject: '',
     message: ''
   });
+
+  useEffect(() => {
+    const fetchPortfolioData = async () => {
+      try {
+        setLoading(true);
+        const result = await portfolioAPI.getPortfolio();
+        
+        if (result.success) {
+          setPortfolioData(result.data);
+        }
+      } catch (err) {
+        console.error('Error fetching portfolio data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPortfolioData();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -23,37 +46,65 @@ const Contact = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Mock form submission
-    alert('Thank you for your message! I will get back to you soon.');
-    setFormData({
-      name: '',
-      email: '',
-      subject: '',
-      message: ''
-    });
+    setSubmitting(true);
+    setSubmitStatus(null);
+
+    try {
+      const result = await contactAPI.submitMessage(formData);
+      
+      if (result.success) {
+        setSubmitStatus('success');
+        setFormData({
+          name: '',
+          email: '',
+          subject: '',
+          message: ''
+        });
+      } else {
+        setSubmitStatus('error');
+        console.error('Form submission error:', result.error);
+      }
+    } catch (error) {
+      setSubmitStatus('error');
+      console.error('Form submission error:', error);
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <section id="contact" className="py-20 bg-white">
+        <div className="container mx-auto px-6">
+          <LoadingSpinner size="large" message="Loading contact information..." />
+        </div>
+      </section>
+    );
+  }
+
+  const { personal } = portfolioData || {};
 
   const contactMethods = [
     {
       icon: <Mail className="w-6 h-6" />,
       title: "Email",
-      value: personal.email,
-      href: `mailto:${personal.email}`,
+      value: personal?.email || "Contact not available",
+      href: personal?.email ? `mailto:${personal.email}` : "#",
       description: "Send me an email"
     },
     {
       icon: <Phone className="w-6 h-6" />,
       title: "Phone",
-      value: personal.phone,
-      href: `tel:${personal.phone}`,
+      value: personal?.phone || "Contact not available", 
+      href: personal?.phone ? `tel:${personal.phone}` : "#",
       description: "Give me a call"
     },
     {
       icon: <MapPin className="w-6 h-6" />,
       title: "Location",
-      value: personal.location,
+      value: personal?.location || "Location not available",
       href: "#",
       description: "Based in India"
     }
@@ -141,6 +192,28 @@ const Contact = () => {
             <Card className="border-sage/20 shadow-xl">
               <CardContent className="p-8">
                 <h3 className="text-2xl font-bold text-charcoal mb-6">Send a Message</h3>
+                
+                {/* Form Status Messages */}
+                {submitStatus === 'success' && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <div>
+                      <p className="text-green-800 font-medium">Message sent successfully!</p>
+                      <p className="text-green-700 text-sm">Thank you for reaching out. I'll get back to you soon.</p>
+                    </div>
+                  </div>
+                )}
+
+                {submitStatus === 'error' && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5 text-red-600" />
+                    <div>
+                      <p className="text-red-800 font-medium">Failed to send message</p>
+                      <p className="text-red-700 text-sm">Please try again or contact me directly via email.</p>
+                    </div>
+                  </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -154,6 +227,7 @@ const Contact = () => {
                         onChange={handleInputChange}
                         placeholder="Enter your name"
                         required
+                        disabled={submitting}
                         className="border-sage/30 focus:border-sage focus:ring-sage/20"
                       />
                     </div>
@@ -168,6 +242,7 @@ const Contact = () => {
                         onChange={handleInputChange}
                         placeholder="Enter your email"
                         required
+                        disabled={submitting}
                         className="border-sage/30 focus:border-sage focus:ring-sage/20"
                       />
                     </div>
@@ -184,6 +259,7 @@ const Contact = () => {
                       onChange={handleInputChange}
                       placeholder="What's this about?"
                       required
+                      disabled={submitting}
                       className="border-sage/30 focus:border-sage focus:ring-sage/20"
                     />
                   </div>
@@ -199,16 +275,27 @@ const Contact = () => {
                       placeholder="Tell me about your project or how I can help..."
                       rows={5}
                       required
+                      disabled={submitting}
                       className="border-sage/30 focus:border-sage focus:ring-sage/20 resize-none"
                     />
                   </div>
 
                   <Button 
                     type="submit"
-                    className="w-full bg-sage hover:bg-sage/90 text-white py-3 text-lg font-medium group"
+                    disabled={submitting}
+                    className="w-full bg-sage hover:bg-sage/90 text-white py-3 text-lg font-medium group disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Send size={20} className="mr-2 group-hover:translate-x-1 transition-transform duration-200" />
-                    Send Message
+                    {submitting ? (
+                      <>
+                        <LoadingSpinner size="small" />
+                        <span className="ml-2">Sending...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send size={20} className="mr-2 group-hover:translate-x-1 transition-transform duration-200" />
+                        Send Message
+                      </>
+                    )}
                   </Button>
                 </form>
               </CardContent>
