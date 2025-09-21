@@ -111,7 +111,7 @@ const Hero = () => {
           </div>
 
           {/* Enhanced Scroll Indicator */}
-          <div className="relative">
+          <div className="flex justify-center">
             <div className="animate-bounce">
               <button 
                 onClick={() => scrollToSection('about')}
