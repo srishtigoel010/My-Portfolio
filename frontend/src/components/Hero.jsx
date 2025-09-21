@@ -88,29 +88,7 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* Enhanced Contact Info */}
-          <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6 mb-12 shadow-lg border border-sage/10">
-            <div className="flex flex-wrap justify-center gap-8 text-sm">
-              <div className="flex items-center gap-3 text-warm-gray hover:text-sage transition-colors group">
-                <div className="p-2 bg-sage/10 rounded-full group-hover:bg-sage/20 transition-colors">
-                  <MapPin size={16} />
-                </div>
-                <span className="font-medium">{personal.location}</span>
-              </div>
-              <div className="flex items-center gap-3 text-warm-gray hover:text-sage transition-colors group">
-                <div className="p-2 bg-sage/10 rounded-full group-hover:bg-sage/20 transition-colors">
-                  <Mail size={16} />
-                </div>
-                <span className="font-medium">{personal.email}</span>
-              </div>
-              <div className="flex items-center gap-3 text-warm-gray hover:text-sage transition-colors group">
-                <div className="p-2 bg-sage/10 rounded-full group-hover:bg-sage/20 transition-colors">
-                  <Phone size={16} />
-                </div>
-                <span className="font-medium">{personal.phone}</span>
-              </div>
-            </div>
-          </div>
+
 
           {/* Enhanced CTAs */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
