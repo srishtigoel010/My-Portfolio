@@ -1,11 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowDown, Mail, Phone, MapPin, Sparkles } from 'lucide-react';
+import { ArrowDown, Sparkles } from 'lucide-react';
 import { Button } from './ui/button';
-import { portfolioData } from '../data/mock';
+import { portfolioAPI } from '../services/api';
+import LoadingSpinner from './LoadingSpinner';
 
 const Hero = () => {
-  const { personal } = portfolioData;
+  const [portfolioData, setPortfolioData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const fetchPortfolioData = async () => {
+      try {
+        setLoading(true);
+        const result = await portfolioAPI.getPortfolio();
+        
+        if (result.success) {
+          setPortfolioData(result.data);
+        } else {
+          setError(result.error);
+        }
+      } catch (err) {
+        setError('Failed to load portfolio data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPortfolioData();
+  }, []);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -22,6 +46,37 @@ const Hero = () => {
       element.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  if (loading) {
+    return (
+      <section id="hero" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cream via-cream/80 to-sage/5">
+        <LoadingSpinner size="large" message="Loading portfolio..." />
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section id="hero" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cream via-cream/80 to-sage/5">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">Error loading portfolio data</div>
+          <p className="text-warm-gray">{error}</p>
+        </div>
+      </section>
+    );
+  }
+
+  const { personal } = portfolioData || {};
+
+  if (!personal) {
+    return (
+      <section id="hero" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cream via-cream/80 to-sage/5">
+        <div className="text-center text-warm-gray">
+          No portfolio data available
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="hero" className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-cream via-cream/80 to-sage/5">
@@ -87,8 +142,6 @@ const Hero = () => {
               </div>
             </div>
           </div>
-
-
 
           {/* Enhanced CTAs */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
