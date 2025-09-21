@@ -33,7 +33,7 @@ const About = () => {
             {/* Content */}
             <div className="order-1 lg:order-2 space-y-8">
               <div>
-                <p className="text-lg text-warm-gray leading-relaxed mb-6">
+                <p className="text-lg text-warm-gray leading-relaxed mb-6 text-justify">
                   {about.content}
                 </p>
               </div>
