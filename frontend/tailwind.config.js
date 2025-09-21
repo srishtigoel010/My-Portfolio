@@ -52,7 +52,13 @@ module.exports = {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
-  			}
+  			},
+  			// Custom Portfolio Colors
+  			'sage': 'hsl(var(--sage))',
+  			'warm-gray': 'hsl(var(--warm-gray))',
+  			'muted-brown': 'hsl(var(--muted-brown))',
+  			'cream': 'hsl(var(--cream))',
+  			'charcoal': 'hsl(var(--charcoal))'
   		},
   		keyframes: {
   			'accordion-down': {
